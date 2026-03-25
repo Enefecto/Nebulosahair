@@ -1,10 +1,12 @@
 ---
 import '../styles/global.css';
+import TitleUpdater from '../components/TitleUpdater';
+import ToasterProvider from '../components/admin/ToasterProvider';
 interface Props {
   title?: string;
   activeSection?: string;
 }
-const { title = 'Panel — NebulosHair', activeSection } = Astro.props;
+const { title = 'Panel — NebulosaHair', activeSection } = Astro.props;
 ---
 <!DOCTYPE html>
 <html lang="es">
@@ -17,6 +19,8 @@ const { title = 'Panel — NebulosHair', activeSection } = Astro.props;
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
   <body class="bg-gray-50 text-gray-900 font-body">
+    <TitleUpdater client:load />
+    <ToasterProvider client:load />
     <slot />
   </body>
 </html>

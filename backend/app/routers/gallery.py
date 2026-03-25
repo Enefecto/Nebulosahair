@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 
-from app.dependencies import get_supabase, get_current_user
+from app.dependencies import get_supabase_admin as get_supabase, get_current_user
 from app.models.schemas import GalleryItemCreate, GalleryItemUpdate
 from app.services.s3 import delete_image_from_url
 

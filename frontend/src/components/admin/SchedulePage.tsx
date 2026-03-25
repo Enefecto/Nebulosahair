@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AuthGuard from './AuthGuard';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,7 +22,6 @@ export default function SchedulePage() {
   const [weekStart, setWeekStart] = useState(toDateString(getWeekMonday()));
   const [days, setDays] = useState(DAYS.map((_, i) => DEFAULT_DAY(i)));
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -54,10 +54,9 @@ export default function SchedulePage() {
     setSaving(true);
     try {
       await scheduleApi.upsert(token, { week_start_date: weekStart, days });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      toast.success('Horarios guardados');
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -133,7 +132,7 @@ export default function SchedulePage() {
             disabled={saving}
             className="bg-brand-pink text-white px-6 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-brand-pink-dark transition-colors"
           >
-            {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar horarios'}
+            {saving ? 'Guardando...' : 'Guardar horarios'}
           </button>
         </main>
       </div>

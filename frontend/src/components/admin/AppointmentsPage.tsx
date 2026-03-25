@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AuthGuard from './AuthGuard';
 import Sidebar from './Sidebar';
+import ConfirmDialog from './ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 import { appointmentsApi, servicesApi } from '../../lib/api';
-import { formatPrice, formatDate, formatTime, STATUS_LABELS, SOURCE_LABELS } from '../../lib/utils';
+import { formatPrice, formatTime, STATUS_LABELS, SOURCE_LABELS } from '../../lib/utils';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -25,6 +27,7 @@ export default function AppointmentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   async function load() {
     if (!token) return;
@@ -43,14 +46,29 @@ export default function AppointmentsPage() {
 
   async function handleStatusChange(id: string, status: string) {
     if (!token) return;
-    await appointmentsApi.updateStatus(token, id, status);
-    load();
+    // Optimistic update — cambio inmediato en UI
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+    try {
+      await appointmentsApi.updateStatus(token, id, status);
+      toast.success(`Estado actualizado: ${STATUS_LABELS[status]}`);
+    } catch (e: any) {
+      // Revertir si falla
+      load();
+      toast.error(e.message || 'Error al actualizar estado');
+    }
   }
 
   async function handleDelete(id: string) {
-    if (!token || !confirm('¿Eliminar esta cita?')) return;
-    await appointmentsApi.delete(token, id);
-    setAppointments(a => a.filter(x => x.id !== id));
+    if (!token) return;
+    try {
+      await appointmentsApi.delete(token, id);
+      setAppointments(a => a.filter(x => x.id !== id));
+      toast.success('Cita eliminada');
+    } catch (e: any) {
+      toast.error(e.message || 'Error al eliminar');
+    } finally {
+      setConfirmDelete(null);
+    }
   }
 
   return (
@@ -133,7 +151,7 @@ export default function AppointmentsPage() {
                           Editar
                         </button>
                         <button
-                          onClick={() => handleDelete(appt.id)}
+                          onClick={() => setConfirmDelete(appt.id)}
                           className="text-xs text-gray-400 hover:underline"
                         >
                           Eliminar
@@ -153,6 +171,15 @@ export default function AppointmentsPage() {
               initial={editing}
               onClose={() => setShowForm(false)}
               onSaved={() => { setShowForm(false); load(); }}
+            />
+          )}
+
+          {confirmDelete && (
+            <ConfirmDialog
+              message="¿Eliminar esta cita? Esta acción no se puede deshacer."
+              confirmLabel="Eliminar cita"
+              onConfirm={() => handleDelete(confirmDelete)}
+              onCancel={() => setConfirmDelete(null)}
             />
           )}
         </main>
@@ -182,12 +209,14 @@ function AppointmentForm({ token, services, initial, onClose, onSaved }: any) {
       const data = { ...form, price_charged: form.price_charged ? Number(form.price_charged) : undefined };
       if (initial) {
         await appointmentsApi.update(token, initial.id, data);
+        toast.success('Cita actualizada');
       } else {
         await appointmentsApi.create(token, data);
+        toast.success('Cita creada');
       }
       onSaved();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }

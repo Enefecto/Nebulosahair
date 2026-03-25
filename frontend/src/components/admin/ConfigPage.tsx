@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AuthGuard from './AuthGuard';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../hooks/useAuth';
@@ -16,7 +17,6 @@ export default function ConfigPage() {
     logo_url: '',
   });
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -44,10 +44,9 @@ export default function ConfigPage() {
         address_lat: form.address_lat ? parseFloat(form.address_lat) : undefined,
         address_lng: form.address_lng ? parseFloat(form.address_lng) : undefined,
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      toast.success('Configuración guardada');
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -61,7 +60,7 @@ export default function ConfigPage() {
       const { url } = await uploadApi.upload(token, file, 'logo', 'logo') as any;
       setForm(f => ({ ...f, logo_url: url }));
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Error al subir logo');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -111,7 +110,7 @@ export default function ConfigPage() {
               disabled={saving}
               className="w-full bg-brand-pink text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-brand-pink-dark transition-colors"
             >
-              {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar cambios'}
+              {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </form>
         </main>

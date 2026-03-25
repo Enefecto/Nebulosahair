@@ -1,12 +1,22 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { publicApi } from '../../lib/api';
 
 export default function Hero() {
+  const [config, setConfig] = useState<any>({});
+
+  useEffect(() => {
+    publicApi.getConfig().then(setConfig).catch(() => {});
+  }, []);
+
+  const name: string = config.business_name || 'NebulosaHair';
+  const split = name.length > 7 ? [name.slice(0, -4), name.slice(-4)] : [name, ''];
+
   return (
     <section
       id="inicio"
       className="min-h-screen flex items-center justify-center relative bg-brand-bg overflow-hidden"
     >
-      {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-radial from-brand-pink/10 via-transparent to-transparent pointer-events-none" />
 
       <div className="text-center px-4 z-10">
@@ -15,12 +25,20 @@ export default function Hero() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          <img
-            src="/logo.png"
-            alt="NebulosHair logo"
-            className="w-40 h-40 mx-auto mb-8 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
+          {config.logo_url ? (
+            <img
+              src={config.logo_url}
+              alt={`${name} logo`}
+              className="w-40 h-40 mx-auto mb-8 object-contain"
+            />
+          ) : (
+            <img
+              src="/logo.png"
+              alt={`${name} logo`}
+              className="w-40 h-40 mx-auto mb-8 object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          )}
         </motion.div>
 
         <motion.h1
@@ -29,7 +47,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="font-display text-5xl sm:text-7xl font-bold text-white mb-4"
         >
-          Nebulos<span className="text-brand-pink">Hair</span>
+          {split[0]}<span className="text-brand-pink">{split[1]}</span>
         </motion.h1>
 
         <motion.p

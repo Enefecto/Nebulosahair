@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AuthGuard from './AuthGuard';
 import Sidebar from './Sidebar';
+import ConfirmDialog from './ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 import { galleryApi, servicesApi, uploadApi } from '../../lib/api';
 
@@ -9,6 +11,7 @@ export default function GalleryPage() {
   const [items, setItems] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   async function load() {
     if (!token) return;
@@ -24,15 +27,28 @@ export default function GalleryPage() {
   useEffect(() => { load(); }, [token]);
 
   async function handleDelete(id: string) {
-    if (!token || !confirm('¿Eliminar imagen?')) return;
-    await galleryApi.delete(token, id);
-    setItems(i => i.filter(x => x.id !== id));
+    if (!token) return;
+    try {
+      await galleryApi.delete(token, id);
+      setItems(i => i.filter(x => x.id !== id));
+      toast.success('Imagen eliminada');
+    } catch (e: any) {
+      toast.error(e.message || 'Error al eliminar');
+    } finally {
+      setConfirmDelete(null);
+    }
   }
 
   async function handleToggleVisible(item: any) {
     if (!token) return;
-    await galleryApi.update(token, item.id, { ...item, is_visible: !item.is_visible });
-    load();
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_visible: !i.is_visible } : i));
+    try {
+      await galleryApi.update(token, item.id, { ...item, is_visible: !item.is_visible });
+      toast.success(!item.is_visible ? 'Imagen visible' : 'Imagen oculta');
+    } catch (e: any) {
+      load();
+      toast.error(e.message || 'Error al actualizar');
+    }
   }
 
   return (
@@ -65,7 +81,7 @@ export default function GalleryPage() {
                       {item.is_visible ? 'Ocultar' : 'Mostrar'}
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => setConfirmDelete(item.id)}
                       className="text-xs bg-red-500 text-white px-3 py-1 rounded-full"
                     >
                       Eliminar
@@ -79,6 +95,14 @@ export default function GalleryPage() {
                 </div>
               ))}
             </div>
+          )}
+          {confirmDelete && (
+            <ConfirmDialog
+              message="¿Eliminar esta imagen? Esta acción no se puede deshacer."
+              confirmLabel="Eliminar imagen"
+              onConfirm={() => handleDelete(confirmDelete)}
+              onCancel={() => setConfirmDelete(null)}
+            />
           )}
         </main>
       </div>
@@ -98,7 +122,7 @@ function UploadButton({ token, onUploaded, services }: any) {
       await (galleryApi.create as any)(token, { image_url: url, is_visible: true, sort_order: 0 });
       onUploaded();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Error al subir imagen');
     } finally {
       setUploading(false);
       e.target.value = '';

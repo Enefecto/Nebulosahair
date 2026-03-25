@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from supabase import Client
 
-from app.dependencies import get_supabase, get_current_user
+from app.dependencies import get_supabase_admin as get_supabase, get_current_user
 from app.models.schemas import SiteConfigUpdate
 
 router = APIRouter()

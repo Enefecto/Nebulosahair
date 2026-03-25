@@ -3,7 +3,7 @@ from supabase import Client
 from datetime import date as Date
 from typing import Optional
 
-from app.dependencies import get_supabase, get_current_user
+from app.dependencies import get_supabase_admin as get_supabase, get_current_user
 from app.models.schemas import AppointmentCreate, AppointmentUpdate, AppointmentStatusUpdate
 
 router = APIRouter()

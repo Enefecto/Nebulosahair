@@ -7,9 +7,15 @@ from app.routers import public, auth, services, appointments, gallery, schedule,
 
 app = FastAPI(title="NebulosHair API", version="1.0.0")
 
+_origins = list({
+    settings.FRONTEND_URL,
+    "http://localhost:4321",
+    "http://127.0.0.1:4321",
+})
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

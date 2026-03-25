@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AuthGuard from './AuthGuard';
 import Sidebar from './Sidebar';
+import ConfirmDialog from './ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 import { servicesApi, uploadApi } from '../../lib/api';
 import { formatPrice, CATEGORY_LABELS } from '../../lib/utils';
@@ -11,6 +13,7 @@ export default function ServicesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   async function load() {
     if (!token) return;
@@ -22,12 +25,15 @@ export default function ServicesPage() {
   useEffect(() => { load(); }, [token]);
 
   async function handleDelete(id: string) {
-    if (!token || !confirm('¿Eliminar este servicio?')) return;
+    if (!token) return;
     try {
       await servicesApi.delete(token, id);
       setServices(s => s.filter(x => x.id !== id));
+      toast.success('Servicio eliminado');
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message || 'Error al eliminar');
+    } finally {
+      setConfirmDelete(null);
     }
   }
 
@@ -81,7 +87,7 @@ export default function ServicesPage() {
                           Editar
                         </button>
                         <button
-                          onClick={() => handleDelete(svc.id)}
+                          onClick={() => setConfirmDelete(svc.id)}
                           className="text-red-400 hover:underline text-xs"
                         >
                           Eliminar
@@ -100,6 +106,15 @@ export default function ServicesPage() {
               initial={editing}
               onClose={() => setShowForm(false)}
               onSaved={() => { setShowForm(false); load(); }}
+            />
+          )}
+
+          {confirmDelete && (
+            <ConfirmDialog
+              message="¿Eliminar este servicio? Esta acción no se puede deshacer."
+              confirmLabel="Eliminar servicio"
+              onConfirm={() => handleDelete(confirmDelete)}
+              onCancel={() => setConfirmDelete(null)}
             />
           )}
         </main>
@@ -132,8 +147,9 @@ function ServiceForm({ token, initial, onClose, onSaved }: any) {
         await servicesApi.create(token, data);
       }
       onSaved();
+      toast.success(initial ? 'Servicio actualizado' : 'Servicio creado');
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }

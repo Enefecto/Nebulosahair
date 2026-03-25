@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { publicApi } from '../../lib/api';
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
@@ -7,6 +8,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [businessName, setBusinessName] = useState('NebulosaHair');
+
+  useEffect(() => {
+    publicApi.getConfig().then((c: any) => { if (c.business_name) setBusinessName(c.business_name); }).catch(() => {});
+  }, []);
 
   if (isAuthenticated) {
     window.location.href = '/admin-nh-7x9k2m/dashboard';
@@ -30,7 +36,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-sm p-8">
-        <h1 className="font-display text-2xl font-bold text-gray-900 mb-1">NebulosHair</h1>
+        <h1 className="font-display text-2xl font-bold text-gray-900 mb-1">{businessName}</h1>
         <p className="text-sm text-gray-500 mb-8">Acceso al panel de gestión</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

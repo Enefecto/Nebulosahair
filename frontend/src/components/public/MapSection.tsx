@@ -36,7 +36,7 @@ export default function MapSection() {
       }).addTo(map);
       L.marker([lat, lng])
         .addTo(map)
-        .bindPopup(`<b>NebulosHair</b><br>${config.address}`)
+        .bindPopup(`<b>${config.business_name || 'NebulosaHair'}</b><br>${config.address}`)
         .openPopup();
     });
   }, [config]);

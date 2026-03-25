@@ -1,11 +1,18 @@
 ---
 import '../styles/global.css';
 import 'leaflet/dist/leaflet.css';
+import TitleUpdater from '../components/TitleUpdater';
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
 }
-const { title = 'NebulosHair', description = 'Tu estilo, nuestra pasión. Peluquería en La Florida, Santiago.' } = Astro.props;
+const {
+  title = 'NebulosaHair',
+  description = 'Tu estilo, nuestra pasión. Peluquería profesional en La Florida, Santiago. Agenda tu hora online.',
+  ogImage = '/og-image.jpg',
+} = Astro.props;
+const canonicalUrl = Astro.url.href;
 ---
 <!DOCTYPE html>
 <html lang="es">
@@ -14,29 +21,62 @@ const { title = 'NebulosHair', description = 'Tu estilo, nuestra pasión. Peluqu
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="es_CL" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Theme color -->
+    <meta name="theme-color" content="#0f0f0f" />
+
     <!-- Structured data for local business -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "HairSalon",
-      "name": "NebulosHair",
+      "name": "NebulosaHair",
+      "description": "Peluquería profesional en La Florida, Santiago.",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Paso El Roble 50",
         "addressLocality": "La Florida",
-        "addressRegion": "Santiago",
+        "addressRegion": "Región Metropolitana",
         "addressCountry": "CL"
       },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": -33.5167,
+        "longitude": -70.5972
+      },
       "url": "https://nebulosahair.pages.dev",
-      "sameAs": ["https://www.instagram.com/nebulosahair.cl/"]
+      "sameAs": ["https://www.instagram.com/nebulosahair.cl/"],
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        "opens": "09:00",
+        "closes": "19:00"
+      },
+      "priceRange": "$$"
     }
     </script>
   </head>
   <body>
+    <TitleUpdater client:load />
     <slot />
   </body>
 </html>

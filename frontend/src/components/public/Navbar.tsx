@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { publicApi } from '../../lib/api';
 
 const LINKS = [
   { href: '#inicio', label: 'Inicio' },
@@ -13,10 +14,12 @@ const LINKS = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [businessName, setBusinessName] = useState('NebulosaHair');
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handler);
+    publicApi.getConfig().then((c: any) => { if (c.business_name) setBusinessName(c.business_name); }).catch(() => {});
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
@@ -26,7 +29,9 @@ export default function Navbar() {
     }`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <a href="#inicio" className="font-display text-xl font-bold text-white">
-          Nebulos<span className="text-brand-pink">Hair</span>
+          {businessName.length > 7
+            ? <>{businessName.slice(0, -4)}<span className="text-brand-pink">{businessName.slice(-4)}</span></>
+            : businessName}
         </a>
 
         {/* Desktop links */}

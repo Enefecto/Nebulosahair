@@ -13,7 +13,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8">
         <div>
           <span className="font-display text-xl font-bold text-white">
-            Nebulos<span className="text-brand-pink">Hair</span>
+            {config.business_name || 'NebulosaHair'}
           </span>
           <p className="text-brand-muted text-sm mt-2">Tu estilo, nuestra pasión.</p>
         </div>
@@ -65,7 +65,7 @@ export default function Footer() {
       </div>
 
       <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-brand-border text-center">
-        <p className="text-brand-muted text-xs">© 2025 NebulosHair. Todos los derechos reservados.</p>
+        <p className="text-brand-muted text-xs">© 2025 {config.business_name || 'NebulosaHair'}. Todos los derechos reservados.</p>
       </div>
     </footer>
   );

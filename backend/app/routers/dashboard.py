@@ -3,7 +3,7 @@ from supabase import Client
 from typing import Optional
 from datetime import date
 
-from app.dependencies import get_supabase, get_current_user
+from app.dependencies import get_supabase_admin as get_supabase, get_current_user
 from app.services.stats import (
     get_summary_stats,
     get_revenue_stats,
