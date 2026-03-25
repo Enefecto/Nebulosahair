@@ -37,7 +37,7 @@ Resources:
     Properties:
       CorsConfiguration:
         AllowOrigins:
-          - !Ref FrontendUrl
+          - "https://nebulosahair.pages.dev"
           - "http://localhost:4321"
           - "http://127.0.0.1:4321"
         AllowHeaders:
@@ -49,7 +49,6 @@ Resources:
           - PUT
           - DELETE
           - OPTIONS
-        AllowCredentials: true
 
   NebulosHairFunction:
     Type: AWS::Serverless::Function
