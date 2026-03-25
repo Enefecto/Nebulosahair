@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: str
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
-    AWS_S3_BUCKET: str = "nebulosahair-assets"
-    AWS_S3_REGION: str = "us-east-1"
+    AWS_S3_BUCKET: str = "nebulosahair-asg7asg5dhf8dhf5adg8"
+    AWS_S3_REGION: str = "sa-east-1"
     ALLOWED_EMAILS: str  # comma-separated
     FRONTEND_URL: str = "https://nebulosahair.pages.dev"
 
