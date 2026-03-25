@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from supabase import Client
 from datetime import date, timedelta, datetime, time
 from app.dependencies import get_supabase, get_supabase_admin
 from app.models.schemas import AppointmentCreate
+from app.limiter import limiter
 
 router = APIRouter()
 
 
 @router.post("/appointments")
+@limiter.limit("1/minute")
 def create_public_appointment(
+    request: Request,
     payload: AppointmentCreate,
     supabase: Client = Depends(get_supabase_admin),
 ):

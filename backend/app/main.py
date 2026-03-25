@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from mangum import Mangum
 
 from app.config import settings
+from app.limiter import limiter
 from app.routers import public, auth, services, appointments, gallery, schedule, config, upload, dashboard
 
 app = FastAPI(title="NebulosHair API", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _origins = list({
     settings.FRONTEND_URL,
