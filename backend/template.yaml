@@ -30,25 +30,9 @@ Parameters:
     Default: https://nebulosahair.pages.dev
 
 Resources:
-  # API Gateway con CORS configurado a nivel de gateway
-  # (intercepta los preflight OPTIONS sin llegar a Lambda)
+  # CORS es manejado por FastAPI CORSMiddleware en Lambda (ver main.py)
   NebulosHairApi:
     Type: AWS::Serverless::HttpApi
-    Properties:
-      CorsConfiguration:
-        AllowOrigins:
-          - "https://nebulosahair.pages.dev"
-          - "http://localhost:4321"
-          - "http://127.0.0.1:4321"
-        AllowHeaders:
-          - Content-Type
-          - Authorization
-        AllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
 
   NebulosHairFunction:
     Type: AWS::Serverless::Function
