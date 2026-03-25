@@ -24,6 +24,11 @@ export const publicApi = {
   getGallery: () => request('/api/public/gallery'),
   getSchedule: (week: string) => request(`/api/public/schedule?week=${week}`),
   getAvailability: (date: string) => request(`/api/public/availability?date=${date}`),
+  createAppointment: (data: unknown) =>
+    request('/api/public/appointments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 
 // --- Auth ---

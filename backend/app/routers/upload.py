@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from typing import Literal
+import traceback
 
 from app.dependencies import get_current_user
 from app.services.s3 import upload_image, delete_image_from_url
@@ -15,7 +16,10 @@ async def upload_img(
     _=Depends(get_current_user),
 ):
     contents = await file.read()
-    url = upload_image(contents, folder, name, file.content_type or "image/jpeg")
+    try:
+        url = upload_image(contents, folder, name, file.content_type or "image/jpeg")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error S3: {str(e)}")
     return {"url": url}
 
 

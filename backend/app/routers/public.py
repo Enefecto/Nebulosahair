@@ -1,9 +1,36 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from supabase import Client
 from datetime import date, timedelta, datetime, time
-from app.dependencies import get_supabase
+from app.dependencies import get_supabase, get_supabase_admin
+from app.models.schemas import AppointmentCreate
 
 router = APIRouter()
+
+
+@router.post("/appointments")
+def create_public_appointment(
+    payload: AppointmentCreate,
+    supabase: Client = Depends(get_supabase_admin),
+):
+    """Endpoint público — crea una cita en estado 'pending' desde el formulario web."""
+    svc = supabase.table("services").select("duration_minutes, price").eq("id", str(payload.service_id)).single().execute()
+    if not svc.data:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+
+    start_dt = datetime.combine(payload.date, payload.start_time)
+    end_dt = start_dt + timedelta(minutes=svc.data["duration_minutes"])
+
+    data = payload.model_dump()
+    data["service_id"] = str(payload.service_id)
+    data["date"] = str(payload.date)
+    data["start_time"] = str(payload.start_time)
+    data["end_time"] = end_dt.strftime("%H:%M:%S")
+    data["status"] = "pending"
+    data["source"] = "web"
+    data["price_charged"] = payload.price_charged or svc.data["price"]
+
+    res = supabase.table("appointments").insert(data).execute()
+    return res.data[0]
 
 
 @router.get("/config")

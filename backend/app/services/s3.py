@@ -37,7 +37,6 @@ def upload_image(content: bytes, folder: str, name: str, content_type: str) -> s
         Key=key,
         Body=processed,
         ContentType="image/webp",
-        ACL="public-read",
     )
     return f"https://{settings.AWS_S3_BUCKET}.s3.{settings.AWS_S3_REGION}.amazonaws.com/{key}"
 
