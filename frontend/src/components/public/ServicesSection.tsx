@@ -5,10 +5,14 @@ import { formatPrice, CATEGORY_LABELS } from '../../lib/utils';
 
 export default function ServicesSection() {
   const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
 
   useEffect(() => {
-    publicApi.getServices().then((data: any) => setServices(data));
+    publicApi.getServices()
+      .then((data: any) => setServices(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const categories = ['all', ...Array.from(new Set(services.map(s => s.category)))];
@@ -44,6 +48,14 @@ export default function ServicesSection() {
             </button>
           ))}
         </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-brand-card border border-brand-border rounded-2xl h-56 animate-pulse" />
+            ))}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((svc, i) => (

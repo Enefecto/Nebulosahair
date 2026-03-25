@@ -4,13 +4,18 @@ import { publicApi } from '../../lib/api';
 
 export default function GallerySection() {
   const [images, setImages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any>(null);
 
   useEffect(() => {
-    publicApi.getGallery().then((data: any) => setImages(data));
+    publicApi.getGallery()
+      .then((data: any) => setImages(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  if (images.length === 0) return null;
+  // No mostrar la sección si no hay imágenes y ya terminó de cargar
+  if (!loading && images.length === 0) return null;
 
   return (
     <section id="galeria" className="py-24 px-4 bg-brand-bg">
@@ -26,26 +31,39 @@ export default function GallerySection() {
           <p className="text-brand-muted">Trabajos que hablan por sí solos</p>
         </motion.div>
 
-        <div className="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
-          {images.map((img, i) => (
-            <motion.div
-              key={img.id}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              onClick={() => setSelected(img)}
-              className="cursor-pointer rounded-xl overflow-hidden break-inside-avoid hover:opacity-90 transition-opacity"
-            >
-              <img
-                src={img.image_url}
-                alt={img.title || ''}
-                className="w-full object-cover"
-                loading="lazy"
+        {/* Skeleton mientras carga */}
+        {loading ? (
+          <div className="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="break-inside-avoid rounded-xl bg-brand-surface animate-pulse"
+                style={{ height: `${180 + (i % 3) * 60}px` }}
               />
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
+            {images.map((img, i) => (
+              <motion.div
+                key={img.id}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                onClick={() => setSelected(img)}
+                className="cursor-pointer rounded-xl overflow-hidden break-inside-avoid hover:opacity-90 transition-opacity"
+              >
+                <img
+                  src={img.image_url}
+                  alt={img.title || ''}
+                  className="w-full object-cover"
+                  loading="lazy"
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Lightbox */}
