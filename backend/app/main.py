@@ -36,4 +36,4 @@ app.include_router(config.router, prefix="/api/config", tags=["config"])
 app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 
-handler = Mangum(app)
+handler = Mangum(app, lifespan="off")

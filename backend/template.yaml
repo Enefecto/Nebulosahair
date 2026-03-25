@@ -30,6 +30,27 @@ Parameters:
     Default: https://nebulosahair.pages.dev
 
 Resources:
+  # API Gateway con CORS configurado a nivel de gateway
+  # (intercepta los preflight OPTIONS sin llegar a Lambda)
+  NebulosHairApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref FrontendUrl
+          - "http://localhost:4321"
+          - "http://127.0.0.1:4321"
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowCredentials: true
+
   NebulosHairFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -49,7 +70,6 @@ Resources:
           AWS_S3_REGION: !Ref S3Region
           ALLOWED_EMAILS: !Ref AllowedEmails
           FRONTEND_URL: !Ref FrontendUrl
-      # IAM policy: acceso a S3 sin credenciales hardcodeadas
       Policies:
         - S3CrudPolicy:
             BucketName: !Ref S3Bucket
@@ -57,18 +77,20 @@ Resources:
         ApiProxy:
           Type: HttpApi
           Properties:
+            ApiId: !Ref NebulosHairApi
             Path: /{proxy+}
             Method: ANY
         ApiRoot:
           Type: HttpApi
           Properties:
+            ApiId: !Ref NebulosHairApi
             Path: /
             Method: ANY
 
 Outputs:
   ApiUrl:
     Description: URL del API Gateway
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Value: !Sub "https://${NebulosHairApi}.execute-api.${AWS::Region}.amazonaws.com"
   FunctionArn:
     Description: ARN de la Lambda
     Value: !GetAtt NebulosHairFunction.Arn
