@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: NebulosHair Backend API — Lambda + API Gateway HTTP API
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+
+Parameters:
+  SupabaseUrl:
+    Type: String
+  SupabaseAnonKey:
+    Type: String
+    NoEcho: true
+  SupabaseServiceRoleKey:
+    Type: String
+    NoEcho: true
+  S3Bucket:
+    Type: String
+    Default: nebulosahair-asg7asg5dhf8dhf5adg8
+  S3Region:
+    Type: String
+    Default: sa-east-1
+  AllowedEmails:
+    Type: String
+    NoEcho: true
+  FrontendUrl:
+    Type: String
+    Default: https://nebulosahair.pages.dev
+
+Resources:
+  NebulosHairFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      DockerTag: latest
+      DockerContext: .
+      Dockerfile: Dockerfile
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          SUPABASE_URL: !Ref SupabaseUrl
+          SUPABASE_ANON_KEY: !Ref SupabaseAnonKey
+          SUPABASE_SERVICE_ROLE_KEY: !Ref SupabaseServiceRoleKey
+          AWS_S3_BUCKET: !Ref S3Bucket
+          AWS_S3_REGION: !Ref S3Region
+          ALLOWED_EMAILS: !Ref AllowedEmails
+          FRONTEND_URL: !Ref FrontendUrl
+      # IAM policy: acceso a S3 sin credenciales hardcodeadas
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref S3Bucket
+      Events:
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: URL del API Gateway
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  FunctionArn:
+    Description: ARN de la Lambda
+    Value: !GetAtt NebulosHairFunction.Arn

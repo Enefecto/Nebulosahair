@@ -12,6 +12,9 @@ frontend/node_modules/
 frontend/dist/
 frontend/.astro/
 
+# SAM build artifacts
+backend/.aws-sam/
+
 # General
 .DS_Store
 *.log

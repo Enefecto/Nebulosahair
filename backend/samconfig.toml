@@ -1,0 +1,16 @@
+version = 0.1
+
+[default.global.parameters]
+stack_name = "nebulosahair-api"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+capabilities       = "CAPABILITY_IAM"
+confirm_changeset  = false
+fail_on_empty_changeset = false
+resolve_s3         = true
+resolve_image_repos = true
+region             = "sa-east-1"

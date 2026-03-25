@@ -5,12 +5,14 @@ from urllib.parse import urlparse
 
 from app.config import settings
 
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    region_name=settings.AWS_S3_REGION,
-)
+# En Lambda, boto3 usa automáticamente el IAM execution role (sin pasar credenciales).
+# En desarrollo local, las credenciales se toman del .env.
+_client_kwargs: dict = {"region_name": settings.AWS_S3_REGION}
+if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+    _client_kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
+    _client_kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
+
+s3_client = boto3.client("s3", **_client_kwargs)
 
 MAX_SIZES = {
     "logo": (400, 400),

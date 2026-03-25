@@ -1,0 +1,49 @@
+name: Deploy Backend → AWS Lambda
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    name: SAM Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: SAM Build
+        working-directory: backend
+        run: sam build
+
+      - name: SAM Deploy
+        working-directory: backend
+        run: |
+          sam deploy \
+            --parameter-overrides \
+              SupabaseUrl="${{ secrets.SUPABASE_URL }}" \
+              SupabaseAnonKey="${{ secrets.SUPABASE_ANON_KEY }}" \
+              SupabaseServiceRoleKey="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              S3Bucket="${{ secrets.AWS_S3_BUCKET }}" \
+              S3Region="${{ secrets.AWS_S3_REGION }}" \
+              AllowedEmails="${{ secrets.ALLOWED_EMAILS }}" \
+              FrontendUrl="${{ secrets.FRONTEND_URL }}"
