@@ -18,7 +18,7 @@ const { title = 'Panel — NebulosaHair', activeSection } = Astro.props;
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
-  <body class="bg-gray-50 text-gray-900 font-body">
+  <body class="bg-gray-50 text-gray-900 font-body min-h-screen">
     <TitleUpdater client:load />
     <ToasterProvider client:load />
     <slot />
