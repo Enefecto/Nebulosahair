@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from supabase import Client
 from datetime import date, timedelta, datetime, time
+from typing import Optional
 from app.dependencies import get_supabase, get_supabase_admin
 from app.models.schemas import AppointmentCreate
 from app.limiter import limiter
@@ -84,10 +85,9 @@ def get_schedule(
 @router.get("/availability")
 def get_availability(
     date: date = Query(...),
-    supabase: Client = Depends(get_supabase),
+    service_id: Optional[str] = Query(None),
+    supabase: Client = Depends(get_supabase_admin),
 ):
-    # Get schedule for that weekday
-    # day_of_week: 0=Monday
     weekday = date.weekday()
     week_start = date - timedelta(days=weekday)
 
@@ -107,7 +107,20 @@ def get_availability(
     if not schedule["is_working"]:
         return {"available_slots": [], "is_working": False}
 
-    # Get existing appointments for that date
+    # Fetch service duration (default 30 min if no service_id provided)
+    duration = 30
+    if service_id:
+        svc_res = (
+            supabase.table("services")
+            .select("duration_minutes")
+            .eq("id", service_id)
+            .single()
+            .execute()
+        )
+        if svc_res.data:
+            duration = svc_res.data["duration_minutes"]
+
+    # Get existing appointments (not cancelled)
     appts_res = (
         supabase.table("appointments")
         .select("start_time, end_time, status")
@@ -116,33 +129,41 @@ def get_availability(
         .execute()
     )
 
-    occupied = [(a["start_time"], a["end_time"]) for a in appts_res.data]
+    def to_minutes(t: str) -> int:
+        """Convert HH:MM:SS or HH:MM to minutes since midnight."""
+        parts = t.split(":")
+        return int(parts[0]) * 60 + int(parts[1])
 
-    # Generate 30-min slots
-    def time_range(start: str, end: str):
-        fmt = "%H:%M:%S"
-        current = datetime.strptime(start, fmt)
-        end_dt = datetime.strptime(end, fmt)
-        slots = []
-        while current < end_dt:
-            slots.append(current.strftime("%H:%M"))
-            current += timedelta(minutes=30)
-        return slots
+    # Parse existing appointment intervals in minutes
+    booked = [(to_minutes(a["start_time"]), to_minutes(a["end_time"])) for a in appts_res.data]
 
-    all_slots = time_range(schedule["start_time"], schedule["end_time"])
+    day_start = to_minutes(schedule["start_time"])
+    day_end = to_minutes(schedule["end_time"])
 
-    # Remove break slots
-    break_slots = set()
+    break_start: Optional[int] = None
+    break_end: Optional[int] = None
     if schedule.get("break_start") and schedule.get("break_end"):
-        break_slots = set(time_range(schedule["break_start"], schedule["break_end"]))
+        break_start = to_minutes(schedule["break_start"])
+        break_end = to_minutes(schedule["break_end"])
 
-    # Remove occupied slots
-    occupied_slots = set()
-    for start_t, end_t in occupied:
-        occupied_slots.update(time_range(start_t, end_t))
+    # Walk through 30-min increments and check if a booking of `duration` fits
+    available = []
+    current = day_start
+    while current + duration <= day_end:
+        slot_start = current
+        slot_end = current + duration
 
-    available = [
-        s for s in all_slots if s not in break_slots and s not in occupied_slots
-    ]
+        # Skip if slot overlaps with break
+        if break_start is not None and slot_start < break_end and slot_end > break_start:
+            current += 30
+            continue
+
+        # Skip if slot overlaps with any existing appointment
+        if any(slot_start < appt_end and slot_end > appt_start for appt_start, appt_end in booked):
+            current += 30
+            continue
+
+        available.append(f"{slot_start // 60:02d}:{slot_start % 60:02d}")
+        current += 30
 
     return {"available_slots": available, "is_working": True, "schedule": schedule}

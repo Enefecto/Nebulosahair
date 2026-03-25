@@ -4,10 +4,10 @@ import { publicApi } from '../../lib/api';
 import { getWeekMonday, toDateString, buildWhatsAppMessage, formatDate } from '../../lib/utils';
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-type Step = 'calendar' | 'time' | 'service' | 'name' | 'confirm' | 'done';
+type Step = 'calendar' | 'service' | 'time' | 'name' | 'confirm' | 'done';
 
-const STEPS: Step[] = ['calendar', 'time', 'service', 'name', 'confirm'];
-const STEP_LABELS = ['Día', 'Hora', 'Servicio', 'Nombre', 'Confirmar'];
+const STEPS: Step[] = ['calendar', 'service', 'time', 'name', 'confirm'];
+const STEP_LABELS = ['Día', 'Servicio', 'Hora', 'Nombre', 'Confirmar'];
 
 export default function ScheduleSection() {
   const [weekStart, setWeekStart] = useState(getWeekMonday());
@@ -32,25 +32,29 @@ export default function ScheduleSection() {
     publicApi.getServices().then((data: any) => setServices(data));
   }, [weekStart]);
 
+  // Fetch availability when both date and service are selected
   useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && selectedService) {
       setLoadingSlots(true);
-      publicApi.getAvailability(selectedDate).then(data => {
+      setAvailability(null);
+      publicApi.getAvailability(selectedDate, selectedService).then(data => {
         setAvailability(data);
         setLoadingSlots(false);
       });
     }
-  }, [selectedDate]);
+  }, [selectedDate, selectedService]);
 
   function selectDay(date: string) {
     setSelectedDate(date);
     setSelectedTime(null);
-    setStep('time');
+    setSelectedService('');
+    setAvailability(null);
+    setStep('service');
   }
 
   function selectTime(time: string) {
     setSelectedTime(time);
-    setStep('service');
+    setStep('name');
   }
 
   function prevWeek() {
@@ -72,6 +76,7 @@ export default function ScheduleSection() {
     setClientName('');
     setClientPhone('');
     setSubmitError('');
+    setAvailability(null);
     setStep('calendar');
   }
 
@@ -79,7 +84,6 @@ export default function ScheduleSection() {
     setSubmitting(true);
     setSubmitError('');
     try {
-      // Guardar en DB primero
       await publicApi.createAppointment({
         client_name: clientName.trim(),
         client_phone: clientPhone.trim() || null,
@@ -89,12 +93,10 @@ export default function ScheduleSection() {
         source: 'web',
       });
     } catch {
-      // Si falla el guardado en DB, igual abrimos WhatsApp pero mostramos aviso
       setSubmitError('No se pudo registrar la cita automáticamente, pero tu mensaje se enviará igual.');
     } finally {
       setSubmitting(false);
     }
-    // Abrir WhatsApp siempre
     const svc = services.find(s => s.id === selectedService);
     const url = buildWhatsAppMessage({
       clientName: clientPhone ? `${clientName} (${clientPhone})` : clientName,
@@ -121,7 +123,7 @@ export default function ScheduleSection() {
           className="text-center mb-10"
         >
           <h2 className="font-display text-4xl font-bold text-white mb-3">Agenda tu hora</h2>
-          <p className="text-brand-muted">Selecciona día, hora y servicio — te contactamos por WhatsApp</p>
+          <p className="text-brand-muted">Selecciona día, servicio y hora — te contactamos por WhatsApp</p>
         </motion.div>
 
         {step === 'done' ? (
@@ -162,7 +164,7 @@ export default function ScheduleSection() {
               </div>
             )}
 
-            {/* Calendar */}
+            {/* Calendar — always visible */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <button onClick={prevWeek} className="text-brand-muted hover:text-white transition-colors text-sm px-2 py-1">← Anterior</button>
@@ -202,8 +204,39 @@ export default function ScheduleSection() {
             </div>
 
             <AnimatePresence mode="wait">
-              {/* Time slots */}
-              {(step === 'time' || step === 'service' || step === 'name' || step === 'confirm') && selectedDate && (
+              {/* Service — shown after day is picked */}
+              {(step === 'service' || step === 'time' || step === 'name' || step === 'confirm') && (
+                <motion.div
+                  key="service"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 pt-6 border-t border-brand-border"
+                >
+                  <h3 className="text-white text-sm font-medium mb-3">¿Qué servicio deseas?</h3>
+                  <select
+                    value={selectedService}
+                    onChange={e => setSelectedService(e.target.value)}
+                    disabled={step !== 'service'}
+                    className="bg-brand-surface border border-brand-border text-white rounded-xl px-4 py-2.5 text-sm w-full disabled:opacity-60"
+                  >
+                    <option value="">Seleccionar servicio...</option>
+                    {services.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} — {s.duration_minutes} min</option>
+                    ))}
+                  </select>
+                  {step === 'service' && selectedService && (
+                    <button
+                      onClick={() => setStep('time')}
+                      className="mt-3 bg-brand-pink text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-brand-pink-dark transition-colors"
+                    >
+                      Ver horarios disponibles →
+                    </button>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Time slots — shown after service is picked */}
+              {(step === 'time' || step === 'name' || step === 'confirm') && selectedDate && (
                 <motion.div
                   key="time"
                   initial={{ opacity: 0, y: 12 }}
@@ -218,7 +251,7 @@ export default function ScheduleSection() {
                       {[...Array(4)].map((_, i) => <div key={i} className="w-16 h-9 bg-brand-surface rounded-lg animate-pulse" />)}
                     </div>
                   ) : availability?.available_slots?.length === 0 ? (
-                    <p className="text-brand-muted text-sm">No hay horarios disponibles este día.</p>
+                    <p className="text-brand-muted text-sm">No hay horarios disponibles para este servicio en este día.</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {availability?.available_slots?.map((slot: string) => (
@@ -237,37 +270,6 @@ export default function ScheduleSection() {
                         </button>
                       ))}
                     </div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* Service */}
-              {(step === 'service' || step === 'name' || step === 'confirm') && (
-                <motion.div
-                  key="service"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 pt-6 border-t border-brand-border"
-                >
-                  <h3 className="text-white text-sm font-medium mb-3">¿Qué servicio deseas?</h3>
-                  <select
-                    value={selectedService}
-                    onChange={e => setSelectedService(e.target.value)}
-                    disabled={step !== 'service'}
-                    className="bg-brand-surface border border-brand-border text-white rounded-xl px-4 py-2.5 text-sm w-full disabled:opacity-60"
-                  >
-                    <option value="">Seleccionar servicio...</option>
-                    {services.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                  {step === 'service' && selectedService && (
-                    <button
-                      onClick={() => setStep('name')}
-                      className="mt-3 bg-brand-pink text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-brand-pink-dark transition-colors"
-                    >
-                      Continuar →
-                    </button>
                   )}
                 </motion.div>
               )}
@@ -321,8 +323,9 @@ export default function ScheduleSection() {
                   <h3 className="text-white text-sm font-medium mb-4">Resumen de tu reserva</h3>
                   <div className="bg-brand-surface rounded-xl p-4 space-y-2.5 mb-4 text-sm">
                     <Row label="📅 Fecha" value={formatDate(selectedDate!)} />
-                    <Row label="🕐 Hora" value={selectedTime!} />
                     <Row label="💇 Servicio" value={selectedSvc?.name || '—'} />
+                    <Row label="🕐 Hora" value={selectedTime!} />
+                    <Row label="⏱ Duración" value={`${selectedSvc?.duration_minutes || '—'} min`} />
                     <Row label="👤 Nombre" value={clientName} />
                     {clientPhone && <Row label="📱 Teléfono" value={clientPhone} />}
                   </div>

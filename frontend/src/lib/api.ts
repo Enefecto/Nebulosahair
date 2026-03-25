@@ -7,6 +7,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...restOptions,
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      // Token expired or invalid — clear session and redirect to login
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('nh_token');
+        sessionStorage.removeItem('nh_user');
+        window.location.href = '/admin-nh-7x9k2m/login';
+      }
+    }
     const error = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(error.detail || 'Error desconocido');
   }
@@ -23,7 +31,8 @@ export const publicApi = {
   getServices: () => request('/api/public/services'),
   getGallery: () => request('/api/public/gallery'),
   getSchedule: (week: string) => request(`/api/public/schedule?week=${week}`),
-  getAvailability: (date: string) => request(`/api/public/availability?date=${date}`),
+  getAvailability: (date: string, serviceId?: string) =>
+    request(`/api/public/availability?date=${date}${serviceId ? `&service_id=${serviceId}` : ''}`),
   createAppointment: (data: unknown) =>
     request('/api/public/appointments', {
       method: 'POST',
