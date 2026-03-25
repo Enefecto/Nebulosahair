@@ -1,12 +1,27 @@
-// Auth state management (in-memory, no localStorage)
-// Token lives only for the current browser session.
+// Auth state — sessionStorage para persistir entre navegaciones del mismo tab.
+// Se borra al cerrar el browser. No usar localStorage por seguridad.
 
-interface AuthState {
+const TOKEN_KEY = 'nh_token';
+const USER_KEY = 'nh_user';
+
+export interface AuthState {
   token: string | null;
   user: { id: string; email: string } | null;
 }
 
-let _state: AuthState = { token: null, user: null };
+function readFromSession(): AuthState {
+  if (typeof window === 'undefined') return { token: null, user: null };
+  try {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const userStr = sessionStorage.getItem(USER_KEY);
+    const user = userStr ? JSON.parse(userStr) : null;
+    return { token, user };
+  } catch {
+    return { token: null, user: null };
+  }
+}
+
+let _state: AuthState = readFromSession();
 const _listeners: Array<(state: AuthState) => void> = [];
 
 export function getAuth(): AuthState {
@@ -15,12 +30,20 @@ export function getAuth(): AuthState {
 
 export function setAuth(token: string, user: { id: string; email: string }) {
   _state = { token, user };
-  _listeners.forEach((fn) => fn(_state));
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+  _listeners.forEach(fn => fn(_state));
 }
 
 export function clearAuth() {
   _state = { token: null, user: null };
-  _listeners.forEach((fn) => fn(_state));
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+  }
+  _listeners.forEach(fn => fn(_state));
 }
 
 export function onAuthChange(fn: (state: AuthState) => void) {
