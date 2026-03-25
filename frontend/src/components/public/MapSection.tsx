@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 
 export default function MapSection() {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
   const [config, setConfig] = useState<any>(null);
 
   useEffect(() => {
@@ -16,9 +17,9 @@ export default function MapSection() {
     const lat = config.address_lat || -33.5167;
     const lng = config.address_lng || -70.5972;
 
-    // Dynamically import leaflet (SSR safe)
+    // Dynamically import leaflet (SSR safe — CSS is loaded in PublicLayout)
     import('leaflet').then(L => {
-      import('leaflet/dist/leaflet.css');
+      if (mapInstanceRef.current) return; // ya inicializado
 
       // Fix default marker icons
       delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -29,6 +30,7 @@ export default function MapSection() {
       });
 
       const map = L.map(mapRef.current!).setView([lat, lng], 16);
+      mapInstanceRef.current = map;
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
