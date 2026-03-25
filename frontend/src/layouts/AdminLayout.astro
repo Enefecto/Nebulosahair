@@ -1,0 +1,22 @@
+---
+import '../styles/global.css';
+interface Props {
+  title?: string;
+  activeSection?: string;
+}
+const { title = 'Panel — NebulosHair', activeSection } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <!-- Robots: no indexar el panel -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body class="bg-gray-50 text-gray-900 font-body">
+    <slot />
+  </body>
+</html>

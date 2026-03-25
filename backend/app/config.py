@@ -1,0 +1,24 @@
+from pydantic_settings import BaseSettings
+from typing import List
+
+
+class Settings(BaseSettings):
+    SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str
+    SUPABASE_SERVICE_ROLE_KEY: str
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_S3_BUCKET: str = "nebulosahair-assets"
+    AWS_S3_REGION: str = "us-east-1"
+    ALLOWED_EMAILS: str  # comma-separated
+    FRONTEND_URL: str = "https://nebulosahair.pages.dev"
+
+    @property
+    def allowed_emails_list(self) -> List[str]:
+        return [e.strip().lower() for e in self.ALLOWED_EMAILS.split(",") if e.strip()]
+
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()

@@ -1,0 +1,21 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import Navbar from '../components/public/Navbar';
+import Hero from '../components/public/Hero';
+import ServicesSection from '../components/public/ServicesSection';
+import GallerySection from '../components/public/GallerySection';
+import ScheduleSection from '../components/public/ScheduleSection';
+import MapSection from '../components/public/MapSection';
+import Footer from '../components/public/Footer';
+---
+<PublicLayout>
+  <Navbar client:load />
+  <main>
+    <Hero client:load />
+    <ServicesSection client:visible />
+    <GallerySection client:visible />
+    <ScheduleSection client:visible />
+    <MapSection client:visible />
+  </main>
+  <Footer client:load />
+</PublicLayout>

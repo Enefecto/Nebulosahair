@@ -1,0 +1,41 @@
+---
+import '../styles/global.css';
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title = 'NebulosHair', description = 'Tu estilo, nuestra pasión. Peluquería en La Florida, Santiago.' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- Structured data for local business -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HairSalon",
+      "name": "NebulosHair",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Paso El Roble 50",
+        "addressLocality": "La Florida",
+        "addressRegion": "Santiago",
+        "addressCountry": "CL"
+      },
+      "url": "https://nebulosahair.pages.dev",
+      "sameAs": ["https://www.instagram.com/nebulosahair.cl/"]
+    }
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
